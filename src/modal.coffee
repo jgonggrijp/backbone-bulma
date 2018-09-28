@@ -1,7 +1,7 @@
 import { View, $ } from 'backbone'
 import { defaults, noop, template as compile } from 'underscore'
 
-export template = '
+template = '
     <div class="modal-background"></div>
     <% if (wrap === "content") { %>
         <div class="modal-content"></div>
