@@ -30,3 +30,52 @@ describe 'Modal', ->
                 expect(@modal.$el).not.toBeEmpty()
             it 'does not call @open', ->
                 expect(@modal.$el).not.toHaveClass @modal.activeClass
+
+        describe '.render', ->
+            beforeEach ->
+                @rendered = @modal.render()
+                @$el = @modal.$el
+                @$ = @modal.$
+            it 'creates a modal backdrop', ->
+                expect(@$el).toContainElement '.modal-background'
+            it 'does not create wrapper elements', ->
+                expect(@$el).not.toContainElement '.modal-content'
+                expect(@$el).not.toContainElement '.modal-card'
+            it 'does create a close button', ->
+                expect(@$el).toContainElement 'button.modal-close'
+            it 'inserts the content element', ->
+                expect(@$el).toContainElement '#dummy'
+            it 'returns itself', ->
+                expect(@rendered).toBe @modal
+
+        describe '.open', ->
+            beforeEach ->
+                @modal.close()
+            it 'adds the .is-active class', ->
+                @modal.open()
+                expect(@modal.$el).toHaveClass @modal.activeClass
+
+        describe '.close', ->
+            beforeEach ->
+                @modal.open()
+                spyOn(@modal, 'userCloseInternal').and.callThrough()
+                setFixtures sandbox()
+                $('#sandbox').append @modal.el
+            it 'removes the .is-active class', ->
+                @modal.close()
+                expect(@modal.$el).not.toHaveClass @modal.activeClass
+            it 'triggers on backdrop click', ->
+                eventSpy = spyOnEvent '.modal-background', 'click'
+                @modal.$('.modal-background').triggerHandler 'click'
+                expect(eventSpy).toHaveBeenTriggered()
+                expect(@modal.userCloseInternal).toHaveBeenCalled()
+
+        describe '.toggle', ->
+            it 'adds the .is-active class when closed', ->
+                @modal.close()
+                @modal.toggle()
+                expect(@modal.$el).toHaveClass @modal.activeClass
+            it 'removes the .is-active class when open', ->
+                @modal.open()
+                @modal.toggle()
+                expect(@modal.$el).not.toHaveClass @modal.activeClass
