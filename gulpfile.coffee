@@ -16,6 +16,7 @@ INDEX = 'index'
 BUNDLE = 'bundle'
 UNITTEST = 'unittest'
 DIST = 'dist'
+SERVE = 'serve'
 WATCH = 'watch'
 CLEAN = 'clean'
 
@@ -24,6 +25,7 @@ rootDir = '.'
 sourceDir = "src"
 buildDir = "dist"
 nodeDir = "node_modules"
+testDir = 'test'
 bundleEntry = 'index.coffee'
 unittestsGlob = "#{sourceDir}/**/*-test.coffee"
 modulesGlob = ["#{sourceDir}/**/*.coffee", "!#{unittestsGlob}"]
@@ -77,6 +79,7 @@ csBrowserify = browserify(
 ).transform(exposify).transform('aliasify', aliasifyConfig)
 
 csTestBrowserify = browserify(
+    debug: yes
     entries: unittestEntries
     extensions: ['.coffee']
     cache: {}
@@ -101,11 +104,14 @@ jsUnittest = ->
     .pipe(vinylStream unittestBundleName)
     .pipe(vinylBuffer())
     .pipe(plugins.jasmineBrowser.specRunner console: yes)
-    .pipe(plugins.jasmineBrowser.headless driver: 'phantomjs', port: 8088)
+    .pipe(gulp.dest testDir)
+    .pipe(plugins.connect.reload())
 
 gulp.task BUNDLE, jsBundle
 
-gulp.task UNITTEST, jsUnittest
+gulp.task UNITTEST, ->
+    jsUnittest()
+    .pipe(plugins.jasmineBrowser.headless driver: 'phantomjs', port: 8088)
 
 gulp.task INDEX, ->
     gulp.src(bundleEntry)
@@ -132,12 +138,21 @@ gulp.task MODULES, ->
 
 gulp.task DIST, gulp.parallel MODULES, INDEX, BUNDLE
 
-gulp.task WATCH, (callback) ->
+gulp.task SERVE, ->
+    plugins.connect.server
+        root: testDir
+        name: 'test'
+        livereload: yes
+        fallback: "#{testDir}/specRunner.html"
+    return
+
+gulp.task WATCH, ->
     csTestBrowserify.plugin watchify
     csTestBrowserify.on 'update', jsUnittest
+    csTestBrowserify.on 'log', log
     jsUnittest()
     return
 
-gulp.task CLEAN, -> del [buildDir, buildProductGlob]
+gulp.task CLEAN, -> del [testDir, buildDir, buildProductGlob]
 
-gulp.task 'default', gulp.series CLEAN, WATCH
+gulp.task 'default', gulp.series CLEAN, gulp.parallel WATCH, SERVE
