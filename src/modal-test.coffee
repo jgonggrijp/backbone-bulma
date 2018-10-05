@@ -66,7 +66,7 @@ describe 'Modal', ->
                 expect(@modal.$el).not.toHaveClass @modal.activeClass
             it 'triggers on backdrop click', ->
                 eventSpy = spyOnEvent '.modal-background', 'click'
-                @modal.$('.modal-background').triggerHandler 'click'
+                @modal.$('.modal-background').click()
                 expect(eventSpy).toHaveBeenTriggered()
                 expect(@modal.userCloseInternal).toHaveBeenCalled()
 
